@@ -1,0 +1,43 @@
+# 🔹 Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 🔹 Virtual environments (IMPORTANT)
+venv/
+env/
+ENV/
+.venv/
+
+# 🔹 Environment variables (secrets)
+.env
+.env.*
+
+# 🔹 Logs
+*.log
+
+# 🔹 Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# 🔹 VS Code
+.vscode/
+
+# 🔹 PyCharm / IntelliJ
+.idea/
+
+# 🔹 Mac / Windows system files
+.DS_Store
+Thumbs.db
+
+# 🔹 Build / distribution
+build/
+dist/
+*.egg-info/
+
+# 🔹 Temporary files
+*.tmp
+*.swp
+
+# 🔹 SQLite / DB files (optional)
+*.db
