@@ -43,7 +43,7 @@ def run_validation(ticker="AAPL"):
     
     # Win Rate (Simplified: % of non-hold steps where reward > 0)
     trades = [r for a, r in zip(actions, rewards) if a != 0]
-    win_rate = (len([t for r in trades if r > 0]) / len(trades)) * 100 if trades else 0
+    win_rate = (len([r for r in trades if r > 0]) / len(trades)) * 100 if trades else 0
 
     # 4. Professional Output
     print("\n" + "="*30)
@@ -63,5 +63,6 @@ def run_validation(ticker="AAPL"):
     print("="*30)
 
 if __name__ == "__main__":
-    # Test on a fresh ticker the model hasn't focused on
-    run_validation("GOOGL")
+    run_validation("AAPL")
+    print("\n")
+    run_validation("RELIANCE.NS")

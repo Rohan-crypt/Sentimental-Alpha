@@ -42,3 +42,20 @@ python main.py
 - **Sentiment Model:** ProsusAI/FinBERT.
 - **Data Source:** Yahoo Finance (Real-time and Historical).
 - **Indicators:** EMA 20, RSI 14 (Wilder's Smoothing).
+
+## Performance Metrics
+
+The model has been validated against a "Buy & Hold" benchmark over a 1-year testing period.
+
+### Validation Report: AAPL
+- **Total AI Signal Return:** 145.02 pts
+- **Buy & Hold Return:** 65.00 pts
+- **Win Rate:** 54.7%
+- **Outcome:** Model Outperformed the market by +80.02 pts.
+
+### Validation Report: RELIANCE.NS
+- **Total AI Signal Return:** -24.91 pts
+- **Buy & Hold Return:** -65.63 pts
+- **Win Rate:** 48.7%
+- **Outcome:** Model Outperformed the market (Minimized loss by +40.72 pts).
+
