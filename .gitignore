@@ -4,40 +4,27 @@ __pycache__/
 *.pyo
 *.pyd
 
-# 🔹 Virtual environments (IMPORTANT)
+# 🔹 Virtual environments
 venv/
 env/
 ENV/
 .venv/
 
-# 🔹 Environment variables (secrets)
+# 🔹 Environment variables
 .env
 .env.*
 
 # 🔹 Logs
 *.log
+logs/
 
-# 🔹 Jupyter Notebook checkpoints
-.ipynb_checkpoints/
+# 🔹 Project Specific
+last_results.csv
+nifty_alpha_brain.zip
 
 # 🔹 VS Code
 .vscode/
 
-# 🔹 PyCharm / IntelliJ
-.idea/
-
 # 🔹 Mac / Windows system files
 .DS_Store
 Thumbs.db
-
-# 🔹 Build / distribution
-build/
-dist/
-*.egg-info/
-
-# 🔹 Temporary files
-*.tmp
-*.swp
-
-# 🔹 SQLite / DB files (optional)
-*.db

@@ -38,12 +38,11 @@ if df is not None and not df.empty:
     m2.metric("BACKTEST P/L", f"{ai_pl} pts", delta="WINNING" if ai_pl > 0 else "LOSING")
     
     # Technical Indicators nikal rahe hain DataFrame se
-    rsi_val = df.filter(like='RSI').iloc[-1].values[0] if not df.filter(like='RSI').empty else 0
+    rsi_val = df['RSI_14'].iloc[-1] if 'RSI_14' in df.columns else 0
     m3.metric("RSI (14)", f"{rsi_val:.2f}")
-    
-    ema_val = df.filter(like='EMA').iloc[-1].values[0] if not df.filter(like='EMA').empty else 0
-    m4.metric("EMA (20)", f"{ema_val:,.1f}")
 
+    ema_val = df['EMA_20'].iloc[-1] if 'EMA_20' in df.columns else 0
+    m4.metric("EMA (20)", f"{ema_val:,.1f}")
     # CHART SECTION: Candlestick visualization ---
     fig = go.Figure(data=[go.Candlestick(
         x=df.index, open=df['Open'], high=df['High'], 
@@ -69,11 +68,6 @@ if df is not None and not df.empty:
     with r:
         st.write("**Neural Network Rationale (Logic):**")
         sentiment_desc = "Bullish" if ai_sent > 0.5 else "Bearish"
-        # hidden layer aur gradients 
-        st.caption(
-            f"Model weights adjust ho chuke hain {ticker} ki volatility ke hisaab se. "
-            f"FinBERT Hidden Layer ka final output: {ai_sent:+.2f} ({sentiment_desc}). "
-            f"Policy Gradient optimization entry confirm kar raha hai."
-        )
+        # The caption section has been removed to clean up the UI.
 else:
     st.error("Bhai Connection Error hai! Terminal check kar ya internet.")

@@ -1,11 +1,14 @@
-# RSI check: 30 ke niche matlab oversold, 70 ke upar matlab overbought
-    last_rsi = df['RSI'].iloc[-1]
-    m3.metric("RSI (14)", f"{last_rsi:.2f}", delta_color="off")
-    
-    # EMA trend line ke liye
-    last_ema = df['EMA_20'].iloc[-1]
-    m4.metric("EMA (20)", f"{last_ema:,.1f}")
-
-
-
-    RELIANCE.NS
+streamlit
+pandas
+numpy
+yfinance
+plotly
+torch
+torchvision
+transformers
+stable-baselines3
+gymnasium
+requests
+scipy
+tensorboard
+matplotlib

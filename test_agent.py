@@ -19,42 +19,38 @@ def backtest_model(ticker="AAPL"):
         print("!! Bhai data hi nahi mila, internet check kar.")
         return
 
-    # Sentiment column check kar rahe hain, Neural Network ko inputs chahiye hote hain
-    if 'Sentiment' not in df.columns:
-        # Agar sentiment nahi hai toh random scores dal rahe hain testing ke liye
-        df['Sentiment'] = np.random.uniform(0.1, 0.9, len(df)) 
-
     # Trained Neural Network ke weights (ZIP file) load ho rahe hain
     model = PPO.load("nifty_alpha_brain")
-    
+
     # Trading environment setup kar rahe hain (Gymnasium based)
-    env = StockTradingEnv(df)
+    # Ticker pass kar rahe hain taaki yfinance news sahi ticker ki uthaye
+    env = StockTradingEnv(df, ticker=ticker)
     obs, _ = env.reset()
-    
+
     total_reward = 0
     done = False
-    
+
     print("--- [FORWARD PROP] AI ab decision le raha hai (Buy/Sell) ---")
 
-    # Inference Loop: Yahan Backpropagation nahi ho raha, sirf Forward pass hai
+    # Inference Loop
     while not done:
-        # deterministic=True ka matlab hai ki AI sirf learned patterns follow karega
         action, _states = model.predict(obs, deterministic=True)
         obs, reward, done, truncated, info = env.step(action)
         total_reward += reward
 
     # RESULTS EXPORT: Ye file dashboard.py read karega
-    last_sentiment = df['Sentiment'].iloc[-1]
+    # Sentiment fetch kar rahe hain environment ke state se (last observation)
+    sentiment_val = obs[-1] # Compound sentiment score is the last feature
     results_data = {
         'ticker': [ticker],
         'final_pl': [round(total_reward, 2)],
-        'sentiment': [round(last_sentiment, 2)],
+        'sentiment': [round(sentiment_val, 2)],
         'confidence': [round(np.random.uniform(75, 95), 1)] # Random confidence for UI
     }
     pd.DataFrame(results_data).to_csv("last_results.csv", index=False)
     
     print(f"\n--- [SAVED] Dashboard update ho gaya hai! ---")
-    print(f"Profit/Loss: {total_reward:.2f} | Sentiment: {last_sentiment:.2f}")
+    print(f"Profit/Loss: {total_reward:.2f} | Sentiment: {sentiment_val:.2f}")
 
 if __name__ == "__main__":
     # Yahan ticker change kar sakte ho

@@ -1,60 +1,80 @@
 import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
+from run_sentiment import get_news, get_sentiment
 
 class StockTradingEnv(gym.Env):
     """
-    Custom environment taaki humara agent Nifty 50 ya AAPL trade kar sake.
-    Observation space mein price, technical indicators aur sentiment sab mixed hai.
+    Custom environment for trading.
+    Observation space includes market data and sentiment.
+    Now uses ticker-specific news via yfinance.
     """
-    def __init__(self, df):
+    def __init__(self, df, ticker="AAPL"):
         super(StockTradingEnv, self).__init__()
         self.df = df
-        # Actions: 0 = Hold (Baitho), 1 = Buy (Kharido), 2 = Sell (Becho)
+        self.ticker = ticker
+        
+        # Actions: 0 = Hold, 1 = Buy, 2 = Sell
         self.action_space = spaces.Discrete(3)
         
-        # Observation space humara engine wala dataframe hai
-        # np.float32 use kar rahe hain kyunki PyTorch aur Stable Baselines ismein fast hain
+        # 🔥 +4 sentiment features added (pos, neg, neu, sentiment)
         self.observation_space = spaces.Box(
-            low=-np.inf, high=np.inf, shape=(df.shape[1],), dtype=np.float32
+            low=-np.inf, high=np.inf, shape=(df.shape[1] + 4,), dtype=np.float32
         )
+
         self.current_step = 0
+        self.cached_sentiment = None
+
+    def _get_sentiment(self):
+        """
+        Fetches live sentiment for the specific ticker.
+        """
+        if self.cached_sentiment is None:
+            try:
+                # Fetches ticker-specific news (NO API KEY NEEDED)
+                headlines = get_news(self.ticker)
+                sentiment_data = get_sentiment(headlines)
+                
+                self.cached_sentiment = np.array(
+                    [sentiment_data['pos'], sentiment_data['neg'], sentiment_data['neu'], sentiment_data['sentiment']], 
+                    dtype=np.float32
+                )
+            except Exception as e:
+                print(f"[WARN] Sentiment fetch failed: {e}. Using defaults.")
+                self.cached_sentiment = np.array([0.33, 0.33, 0.34, 0.0], dtype=np.float32)
+
+        return self.cached_sentiment
 
     def reset(self, seed=None, options=None):
-        # Har episode ke start mein environment ko reset karne ke liye
         super().reset(seed=seed)
         self.current_step = 0
-        
-        # Pehli row se start karenge
-        obs = self.df.iloc[self.current_step].values.astype(np.float32)
+        self.cached_sentiment = None
+
+        market_obs = self.df.iloc[self.current_step].values.astype(np.float32)
+        sentiment_obs = self._get_sentiment()
+
+        obs = np.concatenate([market_obs, sentiment_obs])
         return obs, {}
 
     def step(self, action):
-        # Ek step aage badhte hain data mein
         self.current_step += 1
-        
-        # Check kar rahe hain ki data khatam toh nahi ho gaya
         done = self.current_step >= len(self.df) - 1
-        
-        # REWARD LOGIC (The most tricky part)
-        # Basic idea: Agar Buy kiya aur price badha -> Reward milega.
-        # Agar Sell kiya aur price gira -> Toh bhi profit (Shorting logic).
+
         reward = 0
         if not done:
             current_close = self.df.iloc[self.current_step]['Close']
             next_close = self.df.iloc[self.current_step + 1]['Close']
             diff = next_close - current_close
             
-            if action == 1: # Buy
+            if action == 1:  # Buy
                 reward = diff
-            elif action == 2: # Sell
+            elif action == 2:  # Sell
                 reward = -diff
-            else: # Action 0: Hold
-                # Chhota sa penalty taaki agent lazy na ban jaye aur trade karna seekhe
+            else:  # Hold
                 reward = -0.01 
-        
-        # Naya state (observation) nikal rahe hain
-        obs = self.df.iloc[self.current_step].values.astype(np.float32)
-        
-        # Gym requirements: obs, reward, terminated, truncated, info
+
+        market_obs = self.df.iloc[self.current_step].values.astype(np.float32)
+        sentiment_obs = self._get_sentiment()
+
+        obs = np.concatenate([market_obs, sentiment_obs])
         return obs, reward, done, False, {}
