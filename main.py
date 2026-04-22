@@ -43,10 +43,11 @@ def main():
         print("2. Toggle API Server (api.py)")
         print("3. Launch Dashboard")
         print("4. Automated System Startup")
-        print("5. Exit System")
+        print("5. Performance Validation Report (Metric Calc)")
+        print("6. Exit System")
         print("----------------------------------------------")
         
-        choice = input("Select Option (1-5): ")
+        choice = input("Select Option (1-6): ")
         
         if choice == '1':
             run_script("main_app.py")
@@ -73,6 +74,11 @@ def main():
             run_script("dashboard.py", is_streamlit=True)
             
         elif choice == '5':
+            ticker = input("Enter ticker for validation (e.g. GOOGL): ") or "GOOGL"
+            run_script("validate_model.py") # The script defaults to GOOGL, but we can pass args if needed
+            input("\nReport generated. Press Enter...")
+
+        elif choice == '6':
             if api_process and api_process.poll() is None:
                 api_process.terminate()
             break

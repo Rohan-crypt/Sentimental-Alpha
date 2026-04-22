@@ -39,7 +39,7 @@ with st.expander("MARKET CONTROLS & WATCHLIST", expanded=True):
     c1, c2, c3 = st.columns([2, 2, 1])
     
     with c1:
-        watchlist = ["RELIANCE.NS", "NIFTY_50.NS", "AAPL", "GOOGL", "TSLA", "BTC-USD", "CUSTOM"]
+        watchlist = ["RELIANCE.NS", "^NSEI", "AAPL", "GOOGL", "TSLA", "BTC-USD", "CUSTOM"]
         selected_ticker = st.selectbox("Market Watchlist", watchlist)
     
     with c2:
