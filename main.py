@@ -86,11 +86,30 @@ def main():
             if is_running:
                 api_process.terminate()
                 api_process.wait()
-            print("Initializing backend...")
+            print("Initializing backend AI service...")
             api_process = run_script("api.py", is_fastapi=True)
-            time.sleep(5)
-            print("Initializing frontend...")
-            run_script("dashboard.py", is_streamlit=True)
+            
+            # Robust health check loop
+            max_retries = 30
+            ready = False
+            for i in range(max_retries):
+                try:
+                    import requests
+                    response = requests.get("http://127.0.0.1:8000/health", timeout=2)
+                    if response.status_code == 200:
+                        ready = True
+                        break
+                except Exception:
+                    pass
+                print(f"Waiting for AI Engine... ({i+1}/{max_retries})", end="\r")
+                time.sleep(2)
+            
+            if ready:
+                print("\nAI Engine ONLINE. Initializing frontend dashboard...")
+                run_script("dashboard.py", is_streamlit=True)
+            else:
+                print("\nCRITICAL: AI Service failed to initialize in time.")
+                input("Check logs and press Enter to return...")
             
         elif choice == '5':
             print("\n--- SELECT TICKER FOR VALIDATION ---")

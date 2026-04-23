@@ -19,30 +19,44 @@ def load_model():
     global model
     if model is None:
         try:
+            print(f"Loading AI Brain from {MODEL_PATH}...")
             model = PPO.load(MODEL_PATH)
-        except Exception:
-            pass
+            print("AI Brain loaded successfully.")
+        except Exception as e:
+            print(f"CRITICAL ERROR: Failed to load AI Brain: {e}")
     return model
 
 @app.get("/health")
 def health():
-    return {"status": "active"}
+    return {"status": "active", "model_loaded": model is not None}
 
 @app.get("/predict/{ticker}")
 def predict(ticker: str):
     try:
         df = get_market_data(ticker)
         if df.empty:
-            raise HTTPException(status_code=404, detail="No data")
+            raise HTTPException(status_code=404, detail="No data found for ticker")
         
         agent_model = load_model()
+        if agent_model is None:
+            raise HTTPException(status_code=500, detail="AI Brain model (nifty_alpha_brain) failed to load. Check server logs.")
+            
         env = StockTradingEnv(df, ticker=ticker)
         
-        env.current_step = len(df) - 1
-        # Dropping Raw columns for observation consistency
-        obs_row = df.iloc[env.current_step].drop(['Raw_Open', 'Raw_High', 'Raw_Low', 'Raw_Close', 'EMA_20_Raw', 'Target_Next_5d']).values.astype(np.float32)
+        # 🎯 FIX: Select EXACTLY the 12 technical columns used during training
+        # Training used: Open, High, Low, Close, Volume, RSI_14, Return_1d, Return_3d, Return_5d, RSI_14_Norm, EMA_Dist
+        # Plus the 1 extra default column (often Adj Close or similar if present)
+        technical_cols = [
+            'Open', 'High', 'Low', 'Close', 'Volume', 
+            'RSI_14', 'Return_1d', 'Return_3d', 'Return_5d', 
+            'RSI_14_Norm', 'EMA_Dist'
+        ]
+        
+        obs_row = df.iloc[-1][technical_cols].values.astype(np.float32)
         sentiment_obs = env._get_sentiment()
-        obs = np.concatenate([obs_row, sentiment_obs])
+        
+        # Concatenate: 11 technicals + 4 sentiment + 1 padding to reach 16
+        obs = np.concatenate([obs_row, sentiment_obs, [0.0]]) 
         
         action, _ = agent_model.predict(obs, deterministic=True)
         

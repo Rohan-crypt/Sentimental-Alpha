@@ -13,7 +13,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-API_URL = "http://localhost:8000"
+API_URL = "http://127.0.0.1:8000"
 
 st.title("Sentimental-Alpha: Research Terminal")
 
@@ -34,12 +34,16 @@ st.write(f"Analyzing Market Intelligence for **{ticker}**")
 with st.spinner(f"Querying AI Inference Engine for {ticker}..."):
     try:
         df = get_market_data(ticker)
-        api_response = requests.get(f"{API_URL}/predict/{ticker}", timeout=15)
+        api_response = requests.get(f"{API_URL}/predict/{ticker}", timeout=20)
         api_status = api_response.status_code == 200
-        if api_status: ai_data = api_response.json()
-        else: st.warning("AI Service Offline")
+        if api_status: 
+            ai_data = api_response.json()
+        else: 
+            st.error(f"AI Service Error ({api_response.status_code}): {api_response.text}")
+            api_status = False
     except Exception as e:
-        st.error(f"Error: {e}")
+        st.warning(f"Connection Failed: {e}")
+        api_status = False
         df = None
 
 if df is not None and not df.empty:

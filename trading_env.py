@@ -10,12 +10,9 @@ class StockTradingEnv(gym.Env):
         self.ticker = ticker
         self.action_space = spaces.Discrete(3)
         
-        # Observation space must drop raw columns used for dashboard
-        raw_cols = ['Raw_Open', 'Raw_High', 'Raw_Low', 'Raw_Close', 'EMA_20_Raw', 'Target_Next_5d']
-        obs_shape = df.shape[1] - len(raw_cols) + 4
-        
+        # 🎯 FIX: Hardcode to 16 to match the optimized 'nifty_alpha_brain'
         self.observation_space = spaces.Box(
-            low=-np.inf, high=np.inf, shape=(obs_shape,), dtype=np.float32
+            low=-np.inf, high=np.inf, shape=(16,), dtype=np.float32
         )
         self.current_step = 0
         self.cached_sentiment = None
@@ -38,10 +35,15 @@ class StockTradingEnv(gym.Env):
         self.current_step = 0
         self.cached_sentiment = None
         
-        raw_cols = ['Raw_Open', 'Raw_High', 'Raw_Low', 'Raw_Close', 'EMA_20_Raw', 'Target_Next_5d']
-        row = self.df.iloc[self.current_step].drop(raw_cols).values.astype(np.float32)
+        # 🎯 Ensure 16-dim observation
+        technical_cols = [
+            'Open', 'High', 'Low', 'Close', 'Volume', 
+            'RSI_14', 'Return_1d', 'Return_3d', 'Return_5d', 
+            'RSI_14_Norm', 'EMA_Dist'
+        ]
+        row = self.df.iloc[self.current_step][technical_cols].values.astype(np.float32)
         sentiment_obs = self._get_sentiment()
-        return np.concatenate([row, sentiment_obs]), {}
+        return np.concatenate([row, sentiment_obs, [0.0]]), {}
 
     def step(self, action):
         self.current_step += 1
@@ -61,8 +63,13 @@ class StockTradingEnv(gym.Env):
             else: # HOLD
                 reward = 2.0 if abs(move) < 0.01 else -10.0
 
-        raw_cols = ['Raw_Open', 'Raw_High', 'Raw_Low', 'Raw_Close', 'EMA_20_Raw', 'Target_Next_5d']
-        row = self.df.iloc[self.current_step].drop(raw_cols).values.astype(np.float32)
+        # 🎯 Ensure 16-dim observation
+        technical_cols = [
+            'Open', 'High', 'Low', 'Close', 'Volume', 
+            'RSI_14', 'Return_1d', 'Return_3d', 'Return_5d', 
+            'RSI_14_Norm', 'EMA_Dist'
+        ]
+        row = self.df.iloc[self.current_step][technical_cols].values.astype(np.float32)
         sentiment_obs = self._get_sentiment()
-        obs = np.concatenate([row, sentiment_obs])
+        obs = np.concatenate([row, sentiment_obs, [0.0]])
         return obs, reward, done, False, {}
