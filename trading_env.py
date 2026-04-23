@@ -4,17 +4,18 @@ import numpy as np
 from run_sentiment import get_news, get_sentiment
 
 class StockTradingEnv(gym.Env):
-    """
-    Sniper v6: Balanced Active Trader.
-    Strictly designed to punish 'Always Buy' or 'Always Hold' strategies.
-    """
     def __init__(self, df, ticker="AAPL"):
         super(StockTradingEnv, self).__init__()
         self.df = df
         self.ticker = ticker
         self.action_space = spaces.Discrete(3)
+        
+        # Observation space must drop raw columns used for dashboard
+        raw_cols = ['Raw_Open', 'Raw_High', 'Raw_Low', 'Raw_Close', 'EMA_20_Raw', 'Target_Next_5d']
+        obs_shape = df.shape[1] - len(raw_cols) + 4
+        
         self.observation_space = spaces.Box(
-            low=-np.inf, high=np.inf, shape=(df.shape[1] - 1 + 4,), dtype=np.float32
+            low=-np.inf, high=np.inf, shape=(obs_shape,), dtype=np.float32
         )
         self.current_step = 0
         self.cached_sentiment = None
@@ -36,7 +37,9 @@ class StockTradingEnv(gym.Env):
         super().reset(seed=seed)
         self.current_step = 0
         self.cached_sentiment = None
-        row = self.df.iloc[self.current_step].drop('Raw_Close').values.astype(np.float32)
+        
+        raw_cols = ['Raw_Open', 'Raw_High', 'Raw_Low', 'Raw_Close', 'EMA_20_Raw', 'Target_Next_5d']
+        row = self.df.iloc[self.current_step].drop(raw_cols).values.astype(np.float32)
         sentiment_obs = self._get_sentiment()
         return np.concatenate([row, sentiment_obs]), {}
 
@@ -46,36 +49,20 @@ class StockTradingEnv(gym.Env):
 
         reward = 0
         if not done:
-            price_now = self.df.iloc[self.current_step]['Raw_Close']
-            price_next = self.df.iloc[self.current_step + 1]['Raw_Close']
-            move = (price_next - price_now) / price_now
+            current_price = self.df.iloc[self.current_step]['Raw_Close']
+            next_price = self.df.iloc[self.current_step + 1]['Raw_Close']
+            move = (next_price - current_price) / current_price
             
-            # --- AGGRESSIVE SYMMETRIC REWARDS ---
-            threshold = 0.003 # 0.3% move
-            
+            threshold = 0.003
             if action == 1: # BUY
-                if move > threshold:
-                    reward = 10.0 # Correct Buy
-                elif move < -threshold:
-                    reward = -20.0 # Punish wrong buy heavily
-                else:
-                    reward = -5.0 # Punish buying in flat market
-                    
+                reward = 10.0 if move > threshold else -20.0
             elif action == 2: # SELL
-                if move < -threshold:
-                    reward = 10.0 # Correct Sell
-                elif move > threshold:
-                    reward = -20.0 # Punish wrong sell heavily
-                else:
-                    reward = -5.0 # Punish selling in flat market
-                    
+                reward = 10.0 if move < -threshold else -20.0
             else: # HOLD
-                if abs(move) > 0.01: # Market moved > 1%
-                    reward = -10.0 # Heavy punishment for being lazy during big moves
-                else:
-                    reward = 2.0 # Small reward for being patient in noise
+                reward = 2.0 if abs(move) < 0.01 else -10.0
 
-        row = self.df.iloc[self.current_step].drop('Raw_Close').values.astype(np.float32)
+        raw_cols = ['Raw_Open', 'Raw_High', 'Raw_Low', 'Raw_Close', 'EMA_20_Raw', 'Target_Next_5d']
+        row = self.df.iloc[self.current_step].drop(raw_cols).values.astype(np.float32)
         sentiment_obs = self._get_sentiment()
         obs = np.concatenate([row, sentiment_obs])
         return obs, reward, done, False, {}

@@ -34,16 +34,20 @@ def calculate_rsi(data, window=14):
 def get_market_data(ticker="RELIANCE.NS", period="2y"):
     """
     Standardizes market data with technical indicators and normalized returns.
+    Preserves raw OHLC for visual dashboard.
     """
     raw_data = yf.download(ticker, period=period, interval="1d", progress=False)
     if raw_data.empty: return pd.DataFrame()
     if isinstance(raw_data.columns, pd.MultiIndex): raw_data.columns = raw_data.columns.get_level_values(0)
 
-    # 1. Store raw values for reward calculation later
+    # 1. Preserve Raw OHLC for Charting
+    raw_data['Raw_Open'] = raw_data['Open']
+    raw_data['Raw_High'] = raw_data['High']
+    raw_data['Raw_Low'] = raw_data['Low']
     raw_data['Raw_Close'] = raw_data['Close']
     
     # 2. Technical Indicators
-    raw_data['EMA_20'] = raw_data['Close'].ewm(span=20, adjust=False).mean()
+    raw_data['EMA_20_Raw'] = raw_data['Close'].ewm(span=20, adjust=False).mean()
     raw_data['RSI_14'] = calculate_rsi(raw_data['Close'], window=14)
     
     # 3. Trend Momentum
@@ -51,18 +55,16 @@ def get_market_data(ticker="RELIANCE.NS", period="2y"):
     raw_data['Return_3d'] = raw_data['Close'].pct_change(periods=3)
     raw_data['Return_5d'] = raw_data['Close'].pct_change(periods=5)
     
-    # 4. Dummy target for environment shape compatibility
+    # 4. Dummy target for compatibility
     raw_data['Target_Next_5d'] = 0 
 
-    # 5. Normalization
-    raw_data['RSI_14'] = raw_data['RSI_14'] / 100.0
-    raw_data['EMA_Dist'] = (raw_data['Close'] / raw_data['EMA_20']) - 1.0
+    # 5. Normalization for AI Observation Space
+    raw_data['RSI_14_Norm'] = raw_data['RSI_14'] / 100.0
+    raw_data['EMA_Dist'] = (raw_data['Close'] / raw_data['EMA_20_Raw']) - 1.0
     
-    # Standardize returns to [-1, 1] range for Neural Network
     for col in ['Return_1d', 'Return_3d', 'Return_5d']:
         raw_data[col] = np.clip(raw_data[col] * 20, -1, 1)
     
-    # Transform price columns into percentage changes to keep observation space stationary
     for col in ['Open', 'High', 'Low', 'Close']:
         raw_data[col] = raw_data[col].pct_change() * 20
         

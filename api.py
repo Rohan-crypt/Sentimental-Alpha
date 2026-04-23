@@ -20,8 +20,8 @@ def load_model():
     if model is None:
         try:
             model = PPO.load(MODEL_PATH)
-        except Exception as e:
-            print(f"Error: {e}")
+        except Exception:
+            pass
     return model
 
 @app.get("/health")
@@ -38,11 +38,11 @@ def predict(ticker: str):
         agent_model = load_model()
         env = StockTradingEnv(df, ticker=ticker)
         
-        # Inference on the most recent fully complete data point
         env.current_step = len(df) - 1
-        row = df.iloc[env.current_step].drop('Raw_Close').values.astype(np.float32)
+        # Dropping Raw columns for observation consistency
+        obs_row = df.iloc[env.current_step].drop(['Raw_Open', 'Raw_High', 'Raw_Low', 'Raw_Close', 'EMA_20_Raw', 'Target_Next_5d']).values.astype(np.float32)
         sentiment_obs = env._get_sentiment()
-        obs = np.concatenate([row, sentiment_obs])
+        obs = np.concatenate([obs_row, sentiment_obs])
         
         action, _ = agent_model.predict(obs, deterministic=True)
         
@@ -51,8 +51,8 @@ def predict(ticker: str):
         return {
             "ticker": ticker,
             "price": float(df['Raw_Close'].iloc[-1]),
-            "rsi": float(df['RSI_14'].iloc[-1] * 100),
-            "ema": float(df['EMA_Dist'].iloc[-1] * 100), # Showing % distance
+            "rsi": float(df['RSI_14'].iloc[-1]),
+            "ema": float(df['EMA_20_Raw'].iloc[-1]), 
             "sentiment": float(sentiment_obs[-1]),
             "signal": signals[int(action)],
             "confidence": round(float(np.random.uniform(75, 95)), 1),
