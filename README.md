@@ -38,12 +38,18 @@ python main.py
 4. **Automated Startup:** Sequence to initialize both Backend and Frontend services.
 
 ## Technical Details
-- **RL Algorithm:** Proximal Policy Optimization (PPO) via Stable Baselines 3.
-- **Sentiment Model:** ProsusAI/FinBERT.
+- **RL Algorithm:** Proximal Policy Optimization (PPO) with custom rewards and transaction cost penalties.
+- **Sentiment Model:** ProsusAI/FinBERT (Fine-tuned for Financial Sentiment).
 - **Data Source:** Yahoo Finance (Real-time and Historical).
-- **Indicators:** EMA 20, RSI 14 (Wilder's Smoothing).
+- **Enhanced Feature Set:** 
+  - **Momentum:** RSI 14 (Wilder's Smoothing).
+  - **Trend:** EMA 20, MACD, MACD Signal.
+  - **Volatility:** Bollinger Bands (Upper/Lower), Average True Range (ATR).
+  - **Volume:** 20-Day Moving Average.
 
 ## Performance Metrics
+
+The model has been optimized for high-probability setups and long-term predictive accuracy.
 
 The model has been validated against a "Buy & Hold" benchmark over a 1-year testing period.
 

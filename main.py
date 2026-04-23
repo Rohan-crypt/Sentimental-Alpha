@@ -93,7 +93,19 @@ def main():
             run_script("dashboard.py", is_streamlit=True)
             
         elif choice == '5':
-            target = input("Enter ticker for validation (e.g. AAPL): ") or "AAPL"
+            print("\n--- SELECT TICKER FOR VALIDATION ---")
+            print("1. AAPL (Apple)")
+            print("2. GOOGL (Google)")
+            print("3. RELIANCE.NS (Reliance)")
+            print("4. BTC-USD (Bitcoin)")
+            print("5. Custom Ticker")
+            v_choice = input("Select (1-5): ")
+            
+            ticker_map = {"1": "AAPL", "2": "GOOGL", "3": "RELIANCE.NS", "4": "BTC-USD"}
+            target = ticker_map.get(v_choice)
+            if v_choice == "5" or not target:
+                target = input("Enter custom ticker: ").upper() or "AAPL"
+                
             run_script("validate_model.py", args=[target.upper()])
             input("\nReport generated. Press Enter...")
             
