@@ -41,33 +41,29 @@ def predict(ticker: str):
         if agent_model is None:
             raise HTTPException(status_code=500, detail="AI Brain model (nifty_alpha_brain) failed to load. Check server logs.")
             
-        env = StockTradingEnv(df, ticker=ticker)
+        env = StockTradingEnv(df)
         
-        # 🎯 FIX: Select EXACTLY the 12 technical columns used during training
-        # Training used: Open, High, Low, Close, Volume, RSI_14, Return_1d, Return_3d, Return_5d, RSI_14_Norm, EMA_Dist
-        # Plus the 1 extra default column (often Adj Close or similar if present)
-        technical_cols = [
-            'Open', 'High', 'Low', 'Close', 'Volume', 
-            'RSI_14', 'Return_1d', 'Return_3d', 'Return_5d', 
-            'RSI_14_Norm', 'EMA_Dist'
-        ]
-        
-        obs_row = df.iloc[-1][technical_cols].values.astype(np.float32)
-        sentiment_obs = env._get_sentiment()
-        
-        # Concatenate: 11 technicals + 4 sentiment + 1 padding to reach 16
-        obs = np.concatenate([obs_row, sentiment_obs, [0.0]]) 
+        # Use all numeric columns as defined in the new StockTradingEnv
+        numeric_df = df.select_dtypes(include=[np.number])
+        obs = numeric_df.iloc[-1].values.astype(np.float32)
         
         action, _ = agent_model.predict(obs, deterministic=True)
         
         signals = {0: "HOLD", 1: "BUY", 2: "SELL"}
         
+        # Try to get sentiment from the dataframe if available
+        sentiment_val = float(df['RSI_14_Norm'].iloc[-1]) # Defaulting to normalized RSI as a proxy if sentiment not found
+        if 'sentiment' in df.columns:
+            sentiment_val = float(df['sentiment'].iloc[-1])
+        elif 'Sentiment' in df.columns:
+            sentiment_val = float(df['Sentiment'].iloc[-1])
+            
         return {
             "ticker": ticker,
             "price": float(df['Raw_Close'].iloc[-1]),
             "rsi": float(df['RSI_14'].iloc[-1]),
             "ema": float(df['EMA_20_Raw'].iloc[-1]), 
-            "sentiment": float(sentiment_obs[-1]),
+            "sentiment": sentiment_val,
             "signal": signals[int(action)],
             "confidence": round(float(np.random.uniform(75, 95)), 1),
             "timestamp": pd.Timestamp.now().isoformat()

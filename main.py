@@ -7,10 +7,23 @@ import signal
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
 
+def get_executables():
+    """
+    Auto-detects virtual environment paths.
+    """
+    possible_venvs = ["venv", ".venv"]
+    for v in possible_venvs:
+        py = os.path.join(v, "Scripts", "python.exe")
+        st = os.path.join(v, "Scripts", "streamlit.exe")
+        uv = os.path.join(v, "Scripts", "uvicorn.exe")
+        if os.path.exists(py):
+            return py, st, uv
+    
+    # Fallback to system python if venv not found (not recommended but safe)
+    return sys.executable, "streamlit", "uvicorn"
+
 def run_script(script_path, args=None, is_streamlit=False, is_fastapi=False):
-    python_exe = os.path.join("venv", "Scripts", "python.exe")
-    streamlit_exe = os.path.join("venv", "Scripts", "streamlit.exe")
-    uvicorn_exe = os.path.join("venv", "Scripts", "uvicorn.exe")
+    python_exe, streamlit_exe, uvicorn_exe = get_executables()
     
     if is_streamlit:
         cmd = [streamlit_exe, "run", script_path]
@@ -25,10 +38,14 @@ def run_script(script_path, args=None, is_streamlit=False, is_fastapi=False):
         if is_fastapi:
             return subprocess.Popen(cmd)
         else:
+            print(f"Executing: {' '.join(cmd)}")
             process = subprocess.Popen(cmd)
             process.wait()
             return process
     except KeyboardInterrupt:
+        return None
+    except Exception as e:
+        print(f"Error running {script_path}: {e}")
         return None
 
 def main():
@@ -36,39 +53,36 @@ def main():
     
     while True:
         clear_screen()
-        print("----------------------------------------------")
-        print("    SENTIMENTAL-ALPHA: COMMAND CENTER v2.0    ")
-        print("----------------------------------------------")
+        print("==============================================")
+        print("    SENTIMENTAL-ALPHA: AI COMMAND CENTER      ")
+        print("==============================================")
         is_running = api_process and api_process.poll() is None
-        api_status = "RUNNING" if is_running else "STOPPED"
-        print(f"Inference Server: {api_status}")
+        api_status = "ONLINE" if is_running else "OFFLINE"
+        print(f"Status: [INFERENCE ENGINE {api_status}]")
         print("----------------------------------------------")
-        print("1. Train Model")
-        
-        if is_running:
-            print("2. STOP API Server")
-        else:
-            print("2. START API Server")
-            
-        print("3. Launch Dashboard")
-        print("4. Automated System Startup")
-        print("5. Performance Validation Report")
-        print("6. Exit & Shutdown All")
+        print("1. [TRAIN] Re-train AI Brain (Advanced 3-Layer)")
+        print("2. [API] Start/Stop Inference Server")
+        print("3. [UI] Launch Research Dashboard")
+        print("4. [SYSTEM] Automated Full Startup")
+        print("5. [VAL] Performance Validation Report")
+        print("6. [TEST] Run Test Agent (Manual Inference)")
+        print("7. [EXIT] Shutdown All Services")
         print("----------------------------------------------")
         
-        choice = input("Select Option (1-6): ")
+        choice = input("Command >> ")
         
         if choice == '1':
+            print("\nStarting Advanced Training Sequence...")
             run_script("main_app.py")
-            input("\nProcess complete. Press Enter...")
+            input("\nTraining Complete. New 'nifty_alpha_brain' saved. Press Enter...")
             
         elif choice == '2':
             if is_running:
-                print("Shutting down API server safely...")
+                print("Shutting down API server...")
                 api_process.terminate()
                 api_process.wait()
                 api_process = None
-                print("Server stopped.")
+                print("Server OFFLINE.")
                 time.sleep(1)
             else:
                 print("Starting API server...")
@@ -77,7 +91,7 @@ def main():
             
         elif choice == '3':
             if not is_running:
-                print("Starting required API server...")
+                print("Dashboard requires API. Starting API first...")
                 api_process = run_script("api.py", is_fastapi=True)
                 time.sleep(4)
             run_script("dashboard.py", is_streamlit=True)
@@ -86,11 +100,10 @@ def main():
             if is_running:
                 api_process.terminate()
                 api_process.wait()
-            print("Initializing backend AI service...")
+            print("Initializing AI Infrastructure...")
             api_process = run_script("api.py", is_fastapi=True)
             
-            # Robust health check loop
-            max_retries = 30
+            max_retries = 20
             ready = False
             for i in range(max_retries):
                 try:
@@ -101,39 +114,33 @@ def main():
                         break
                 except Exception:
                     pass
-                print(f"Waiting for AI Engine... ({i+1}/{max_retries})", end="\r")
+                print(f"Waiting for Brain... ({i+1}/{max_retries})", end="\r")
                 time.sleep(2)
             
             if ready:
-                print("\nAI Engine ONLINE. Initializing frontend dashboard...")
+                print("\nBrain Online. Launching Terminal...")
                 run_script("dashboard.py", is_streamlit=True)
             else:
-                print("\nCRITICAL: AI Service failed to initialize in time.")
-                input("Check logs and press Enter to return...")
+                print("\nError: API failed to start. Check terminal output.")
+                input("Press Enter to return...")
             
         elif choice == '5':
-            print("\n--- SELECT TICKER FOR VALIDATION ---")
-            print("1. AAPL (Apple)")
-            print("2. GOOGL (Google)")
-            print("3. RELIANCE.NS (Reliance)")
-            print("4. BTC-USD (Bitcoin)")
-            print("5. Custom Ticker")
-            v_choice = input("Select (1-5): ")
-            
-            ticker_map = {"1": "AAPL", "2": "GOOGL", "3": "RELIANCE.NS", "4": "BTC-USD"}
-            target = ticker_map.get(v_choice)
-            if v_choice == "5" or not target:
-                target = input("Enter custom ticker: ").upper() or "AAPL"
-                
-            run_script("validate_model.py", args=[target.upper()])
-            input("\nReport generated. Press Enter...")
+            print("\n--- PERFORMANCE VALIDATION ---")
+            target = input("Enter Ticker (default: AAPL): ").upper() or "AAPL"
+            run_script("validate_model.py", args=[target])
+            input("\nValidation Complete. Press Enter...")
             
         elif choice == '6':
+            print("\n--- TEST AGENT INFERENCE ---")
+            target = input("Enter Ticker (default: RELIANCE.NS): ").upper() or "RELIANCE.NS"
+            run_script("test_agent.py", args=[target])
+            input("\nTest Run Complete. Press Enter...")
+
+        elif choice == '7':
             if api_process and api_process.poll() is None:
-                print("Graceful shutdown in progress...")
                 api_process.terminate()
                 api_process.wait()
-            print("System offline. Goodbye.")
+            print("All systems offline. Goodbye.")
             break
         else:
             time.sleep(0.5)

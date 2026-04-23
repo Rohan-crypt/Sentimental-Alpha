@@ -1,75 +1,64 @@
 import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
-from run_sentiment import get_news, get_sentiment
 
 class StockTradingEnv(gym.Env):
-    def __init__(self, df, ticker="AAPL"):
+    """
+    Custom environment taaki humara agent Nifty 50 ya AAPL trade kar sake.
+    Observation space mein price, technical indicators aur sentiment sab mixed hai.
+    """
+    def __init__(self, df):
         super(StockTradingEnv, self).__init__()
-        self.df = df
-        self.ticker = ticker
+        # Select only numeric columns for the observation space
+        self.df = df.select_dtypes(include=[np.number])
+        
+        # Actions: 0 = Hold (Baitho), 1 = Buy (Kharido), 2 = Sell (Becho)
         self.action_space = spaces.Discrete(3)
         
-        # 🎯 FIX: Hardcode to 16 to match the optimized 'nifty_alpha_brain'
+        # Observation space humara engine wala dataframe hai
+        # np.float32 use kar rahe hain kyunki PyTorch aur Stable Baselines ismein fast hain
         self.observation_space = spaces.Box(
-            low=-np.inf, high=np.inf, shape=(16,), dtype=np.float32
+            low=-np.inf, high=np.inf, shape=(self.df.shape[1],), dtype=np.float32
         )
         self.current_step = 0
-        self.cached_sentiment = None
-
-    def _get_sentiment(self):
-        if self.cached_sentiment is None:
-            try:
-                headlines = get_news(self.ticker)
-                data = get_sentiment(headlines)
-                self.cached_sentiment = np.array(
-                    [data['pos'], data['neg'], data['neu'], data['sentiment']], 
-                    dtype=np.float32
-                )
-            except Exception:
-                self.cached_sentiment = np.array([0.33, 0.33, 0.34, 0.0], dtype=np.float32)
-        return self.cached_sentiment
 
     def reset(self, seed=None, options=None):
+        # Har episode ke start mein environment ko reset karne ke liye
         super().reset(seed=seed)
         self.current_step = 0
-        self.cached_sentiment = None
         
-        # 🎯 Ensure 16-dim observation
-        technical_cols = [
-            'Open', 'High', 'Low', 'Close', 'Volume', 
-            'RSI_14', 'Return_1d', 'Return_3d', 'Return_5d', 
-            'RSI_14_Norm', 'EMA_Dist'
-        ]
-        row = self.df.iloc[self.current_step][technical_cols].values.astype(np.float32)
-        sentiment_obs = self._get_sentiment()
-        return np.concatenate([row, sentiment_obs, [0.0]]), {}
+        # Pehli row se start karenge
+        obs = self.df.iloc[self.current_step].values.astype(np.float32)
+        return obs, {}
 
     def step(self, action):
+        # Ek step aage badhte hain data mein
         self.current_step += 1
+        
+        # Check kar rahe hain ki data khatam toh nahi ho gaya
         done = self.current_step >= len(self.df) - 1
-
+        
+        # REWARD LOGIC (The most tricky part)
+        # Basic idea: Agar Buy kiya aur price badha -> Reward milega.
+        # Agar Sell kiya aur price gira -> Toh bhi profit (Shorting logic).
         reward = 0
         if not done:
-            current_price = self.df.iloc[self.current_step]['Raw_Close']
-            next_price = self.df.iloc[self.current_step + 1]['Raw_Close']
-            move = (next_price - current_price) / current_price
+            # We use 'Close' for reward calculation if available, else the first column (assuming it's price-related)
+            price_col = 'Close' if 'Close' in self.df.columns else self.df.columns[0]
+            current_close = self.df.iloc[self.current_step][price_col]
+            next_close = self.df.iloc[self.current_step + 1][price_col]
+            diff = next_close - current_close
             
-            threshold = 0.003
-            if action == 1: # BUY
-                reward = 10.0 if move > threshold else -20.0
-            elif action == 2: # SELL
-                reward = 10.0 if move < -threshold else -20.0
-            else: # HOLD
-                reward = 2.0 if abs(move) < 0.01 else -10.0
-
-        # 🎯 Ensure 16-dim observation
-        technical_cols = [
-            'Open', 'High', 'Low', 'Close', 'Volume', 
-            'RSI_14', 'Return_1d', 'Return_3d', 'Return_5d', 
-            'RSI_14_Norm', 'EMA_Dist'
-        ]
-        row = self.df.iloc[self.current_step][technical_cols].values.astype(np.float32)
-        sentiment_obs = self._get_sentiment()
-        obs = np.concatenate([row, sentiment_obs, [0.0]])
+            if action == 1: # Buy
+                reward = diff
+            elif action == 2: # Sell
+                reward = -diff
+            else: # Action 0: Hold
+                # Chhota sa penalty taaki agent lazy na ban jaye aur trade karna seekhe
+                reward = -0.01 
+        
+        # Naya state (observation) nikal rahe hain
+        obs = self.df.iloc[self.current_step].values.astype(np.float32)
+        
+        # Gym requirements: obs, reward, terminated, truncated, info
         return obs, reward, done, False, {}

@@ -19,16 +19,33 @@ def run_validation(ticker="AAPL"):
         print("Error: Brain model not found. Please train the model first.")
         return
 
-    env = StockTradingEnv(df, ticker=ticker)
+    env = StockTradingEnv(df)
     obs, _ = env.reset()
     
+    # Track results
     done = False
     rewards = []
     actions = []
     
-    # Track results
+    # Track actions
+    buy_count = 0
+    sell_count = 0
+    hold_count = 0
+
     while not done:
-        action, _ = model.predict(obs, deterministic=True)
+        # Use only numeric columns for prediction as defined in new StockTradingEnv
+        numeric_df = df.select_dtypes(include=[np.number])
+        current_obs = numeric_df.iloc[env.current_step].values.astype(np.float32)
+        
+        action, _ = model.predict(current_obs, deterministic=True)
+        
+        if action == 1:
+            buy_count += 1
+        elif action == 2:
+            sell_count += 1
+        else:
+            hold_count += 1
+            
         obs, reward, done, _, _ = env.step(action)
         rewards.append(reward)
         actions.append(action)
@@ -55,6 +72,10 @@ def run_validation(ticker="AAPL"):
     print(f" FINAL VALIDATION REPORT: {ticker}")
     print("="*40)
     print(f"Testing Period:     {total_steps} trading days")
+    print(f"Total Buy Actions:  {buy_count}")
+    print(f"Total Sell Actions: {sell_count}")
+    print(f"Total Hold Actions: {hold_count}")
+    print("-" * 40)
     print(f"Active Trades:      {active_trades}")
     print(f"Raw Win Rate:       {win_rate:.1f}%")
     print("-" * 40)
