@@ -14,7 +14,7 @@ def run_validation(ticker="AAPL"):
         return
         
     try:
-        model = PPO.load("nifty_alpha_brain")
+        model = PPO.load("test_brain")
     except Exception:
         print("Error: Brain model not found. Please train the model first.")
         return
@@ -33,11 +33,7 @@ def run_validation(ticker="AAPL"):
     hold_count = 0
 
     while not done:
-        # Use only numeric columns for prediction as defined in new StockTradingEnv
-        numeric_df = df.select_dtypes(include=[np.number])
-        current_obs = numeric_df.iloc[env.current_step].values.astype(np.float32)
-        
-        action, _ = model.predict(current_obs, deterministic=True)
+        action, _ = model.predict(obs, deterministic=True)
         
         if action == 1:
             buy_count += 1

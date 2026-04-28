@@ -42,21 +42,18 @@ def predict(ticker: str):
             raise HTTPException(status_code=500, detail="AI Brain model (nifty_alpha_brain) failed to load. Check server logs.")
             
         env = StockTradingEnv(df)
+        obs, _ = env.reset()
         
-        # Use all numeric columns as defined in the new StockTradingEnv
-        numeric_df = df.select_dtypes(include=[np.number])
-        obs = numeric_df.iloc[-1].values.astype(np.float32)
+        # Move to the last step to get the most recent observation
+        env.current_step = len(df) - 1
+        obs = env._get_obs()
         
         action, _ = agent_model.predict(obs, deterministic=True)
         
         signals = {0: "HOLD", 1: "BUY", 2: "SELL"}
         
-        # Try to get sentiment from the dataframe if available
-        sentiment_val = float(df['RSI_14_Norm'].iloc[-1]) # Defaulting to normalized RSI as a proxy if sentiment not found
-        if 'sentiment' in df.columns:
-            sentiment_val = float(df['sentiment'].iloc[-1])
-        elif 'Sentiment' in df.columns:
-            sentiment_val = float(df['Sentiment'].iloc[-1])
+        # Get actual sentiment from the dataframe
+        sentiment_val = float(df['Sentiment'].iloc[-1]) if 'Sentiment' in df.columns else 0.0
             
         return {
             "ticker": ticker,

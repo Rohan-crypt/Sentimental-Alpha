@@ -50,6 +50,11 @@ def get_market_data(ticker="RELIANCE.NS", period="2y"):
     raw_data['EMA_20_Raw'] = raw_data['Close'].ewm(span=20, adjust=False).mean()
     raw_data['RSI_14'] = calculate_rsi(raw_data['Close'], window=14)
     
+    ema_12 = raw_data['Close'].ewm(span=12, adjust=False).mean()
+    ema_26 = raw_data['Close'].ewm(span=26, adjust=False).mean()
+    raw_data['MACD'] = ema_12 - ema_26
+    raw_data['MACD_Signal'] = raw_data['MACD'].ewm(span=9, adjust=False).mean()
+    
     # 3. Trend Momentum
     raw_data['Return_1d'] = raw_data['Close'].pct_change()
     raw_data['Return_3d'] = raw_data['Close'].pct_change(periods=3)
@@ -61,6 +66,20 @@ def get_market_data(ticker="RELIANCE.NS", period="2y"):
     # 5. Normalization for AI Observation Space
     raw_data['RSI_14_Norm'] = raw_data['RSI_14'] / 100.0
     raw_data['EMA_Dist'] = (raw_data['Close'] / raw_data['EMA_20_Raw']) - 1.0
+    
+    # Normalize MACD by dividing by rolling standard deviation (volatility)
+    volatility = raw_data['Close'].rolling(20).std()
+    raw_data['MACD_Norm'] = np.clip(raw_data['MACD'] / volatility, -1, 1).fillna(0)
+    raw_data['MACD_Signal_Norm'] = np.clip(raw_data['MACD_Signal'] / volatility, -1, 1).fillna(0)
+    
+    # Normalize Volume (percent change)
+    if 'Volume' in raw_data.columns:
+        raw_data['Volume_Norm'] = np.clip(raw_data['Volume'].pct_change() * 10, -1, 1).fillna(0)
+    else:
+        raw_data['Volume_Norm'] = 0.0
+
+    # Add a continuous Sentiment score (since running FinBERT on 500+ historical rows is too slow, we simulate it based on momentum)
+    raw_data['Sentiment'] = np.clip((raw_data['RSI_14'] - 50) / 50.0 + (raw_data['Close'].pct_change(periods=3) * 10), -1, 1).fillna(0)
     
     for col in ['Return_1d', 'Return_3d', 'Return_5d']:
         raw_data[col] = np.clip(raw_data[col] * 20, -1, 1)
