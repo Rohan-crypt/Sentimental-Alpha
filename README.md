@@ -6,6 +6,8 @@ Sentimental-Alpha is a professional-grade trading research terminal that integra
 
 ## 🏗️ Project Architecture & Tech Stack
 
+![Sentimental-Alpha System Model](./system_model.jpg)
+
 ### 1. **Intelligence Layer (AI & ML)**
 - **Stable-Baselines3 (PPO):** Implements Proximal Policy Optimization with an optimized entropy coefficient to prevent mode collapse.
 - **HuggingFace Transformers (FinBERT):** A specialized NLP model (ProsusAI/finbert) used to convert unstructured financial news into dense sentiment vectors.
