@@ -14,7 +14,7 @@ def run_validation(ticker="AAPL"):
         return
         
     try:
-        model = PPO.load("test_brain")
+        model = PPO.load("nifty_alpha_brain.zip")
     except Exception:
         print("Error: Brain model not found. Please train the model first.")
         return

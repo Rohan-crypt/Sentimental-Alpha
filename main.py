@@ -65,8 +65,9 @@ def main():
         print("3. [UI] Launch Research Dashboard")
         print("4. [SYSTEM] Automated Full Startup")
         print("5. [VAL] Performance Validation Report")
-        print("6. [TEST] Run Test Agent (Manual Inference)")
-        print("7. [EXIT] Shutdown All Services")
+        print("6. [VIS] Generate Research Analytics (Graphs)")
+        print("7. [TEST] Run Test Agent (Manual Inference)")
+        print("8. [EXIT] Shutdown All Services")
         print("----------------------------------------------")
         
         choice = input("Command >> ")
@@ -131,12 +132,28 @@ def main():
             input("\nValidation Complete. Press Enter...")
             
         elif choice == '6':
+            print("\n--- RESEARCH ANALYTICS (GRAPHS) ---")
+            print("a. Backtest Results (Equity/Accuracy)")
+            print("b. Training Convergence (Learning Progress)")
+            print("c. Feature Dynamics (Explainability)")
+            sub_choice = input("Select Type >> ").lower()
+            
+            if sub_choice == 'a':
+                t = input("Ticker (default: AAPL): ").upper() or "AAPL"
+                run_script("visualize_results.py", args=[t])
+            elif sub_choice == 'b':
+                run_script("visualize_training.py")
+            elif sub_choice == 'c':
+                run_script("visualize_features.py")
+            input("\nAnalytics Generated. Press Enter...")
+
+        elif choice == '7':
             print("\n--- TEST AGENT INFERENCE ---")
             target = input("Enter Ticker (default: RELIANCE.NS): ").upper() or "RELIANCE.NS"
             run_script("test_agent.py", args=[target])
             input("\nTest Run Complete. Press Enter...")
 
-        elif choice == '7':
+        elif choice == '8':
             if api_process and api_process.poll() is None:
                 api_process.terminate()
                 api_process.wait()

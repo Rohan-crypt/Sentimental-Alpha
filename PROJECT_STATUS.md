@@ -32,6 +32,12 @@ Sentimental-Alpha is a sophisticated trading research terminal that integrates R
 - `validate_model.py`: Script for evaluating model performance against historical data.
 - `ACCURACY_IMPROVEMENT.md`: Detailed report on methodology and reward shaping.
 
-## 6. Development Notes
-- **Dependencies:** Managed via `requirements.txt`. Key libraries include `torch`, `transformers`, `yfinance`, `stable-baselines3`, `fastapi`, and `streamlit`.
-- **Environment:** Uses a Python virtual environment (`venv`).
+## 7. Research Visualization & Metrics
+To satisfy academic and professional presentation requirements, the following visualization suite has been implemented:
+- **`visualize_results.py`**: Generates a comprehensive backtest report (`results_[TICKER].png`) including:
+    - Equity Curve (Strategy vs. Benchmark)
+    - Strategic Trade Execution Map
+    - Risk Profile (Drawdown)
+    - Decision Accuracy Matrix (AI Action vs. Market Outcome)
+- **`visualize_training.py`**: Extracts Tensorboard logs to plot Training Convergence (`training_convergence.png`) showing Mean Episode Reward and PPO Loss over time.
+- **`visualize_features.py`**: Provides model explainability (`feature_dynamics.png`) via Feature Correlation Heatmaps and Sentiment Synergy analysis.
