@@ -6,7 +6,7 @@ Sentimental-Alpha is a professional-grade trading research terminal that integra
 
 ## 🏗️ Project Architecture & Tech Stack
 
-![Sentimental-Alpha System Model](./system_model.jpg)
+![Sentimental-Alpha System Model](./system_model_v2.png)
 
 ### 1. **Intelligence Layer (AI & ML)**
 - **Stable-Baselines3 (PPO):** Implements Proximal Policy Optimization with an optimized entropy coefficient to prevent mode collapse.
@@ -21,6 +21,19 @@ Sentimental-Alpha is a professional-grade trading research terminal that integra
 ### 3. **Infrastructure Layer (Microservices)**
 - **FastAPI (`api.py`):** Serves real-time inference using the trained PPO "Brain."
 - **Streamlit (`dashboard.py`):** Interactive terminal for visualizing market intelligence, neural signals, and sentiment feeds.
+
+---
+
+## 🛡️ Model Validation & Transparency
+To ensure research integrity, the system includes a **Master Validation Suite** (`validate_master.py`) that generates high-fidelity performance metrics.
+
+![Validation Workflow](./validation_workflow.png)
+
+### **Key Validation Metrics:**
+- **Monte Carlo Robustness:** Validates strategy stability against 100 randomized market paths.
+- **Rolling Sharpe Ratio:** Monitors the consistency of risk-adjusted returns.
+- **Monthly Return Heatmaps:** Visualizes seasonal performance and outlier detection.
+- **Confusion Matrix Analysis:** Maps discrete AI actions (Buy/Sell) to actual market outcomes for accuracy verification.
 
 ---
 

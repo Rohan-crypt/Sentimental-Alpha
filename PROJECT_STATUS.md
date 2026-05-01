@@ -41,3 +41,9 @@ To satisfy academic and professional presentation requirements, the following vi
     - Decision Accuracy Matrix (AI Action vs. Market Outcome)
 - **`visualize_training.py`**: Extracts Tensorboard logs to plot Training Convergence (`training_convergence.png`) showing Mean Episode Reward and PPO Loss over time.
 - **`visualize_features.py`**: Provides model explainability (`feature_dynamics.png`) via Feature Correlation Heatmaps and Sentiment Synergy analysis.
+- **`validate_master.py`**: (New) Generates a master validation suite (`validation_comprehensive_[TICKER].png`) and a system workflow diagram (`validation_workflow.png`). Includes:
+    - **Monte Carlo Robustness**: Testing strategy against 100 randomized return paths.
+    - **Monthly Returns Heatmap**: Visualizing seasonal/monthly consistency.
+    - **Rolling Sharpe Ratio**: Monitoring risk-adjusted stability over time.
+    - **Trade Distribution**: Analyzing the quality and skew of individual trades.
+    - **Workflow Diagram**: Mapping the system's validation lifecycle.

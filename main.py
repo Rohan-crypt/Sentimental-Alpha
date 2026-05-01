@@ -126,16 +126,17 @@ def main():
                 input("Press Enter to return...")
             
         elif choice == '5':
-            print("\n--- PERFORMANCE VALIDATION ---")
+            print("\n--- MASTER PERFORMANCE VALIDATION ---")
             target = input("Enter Ticker (default: AAPL): ").upper() or "AAPL"
-            run_script("validate_model.py", args=[target])
-            input("\nValidation Complete. Press Enter...")
+            run_script("validate_master.py", args=[target])
+            input("\nComprehensive Validation Complete. Press Enter...")
             
         elif choice == '6':
             print("\n--- RESEARCH ANALYTICS (GRAPHS) ---")
             print("a. Backtest Results (Equity/Accuracy)")
             print("b. Training Convergence (Learning Progress)")
             print("c. Feature Dynamics (Explainability)")
+            print("d. Master Validation Dashboard (Monte Carlo/Risk)")
             sub_choice = input("Select Type >> ").lower()
             
             if sub_choice == 'a':
@@ -145,6 +146,9 @@ def main():
                 run_script("visualize_training.py")
             elif sub_choice == 'c':
                 run_script("visualize_features.py")
+            elif sub_choice == 'd':
+                t = input("Ticker (default: AAPL): ").upper() or "AAPL"
+                run_script("validate_master.py", args=[t])
             input("\nAnalytics Generated. Press Enter...")
 
         elif choice == '7':
